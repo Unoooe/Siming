@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Quality Assessment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=34">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="comparison-section">
+                <div class="image-panel" id="referencePanel">
+                    <div class="upload-area" id="referenceUpload">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5.5 13 A 6.5 6.5 0 0 0 18.5 13"/>
+                            <polyline points="8,10 12,6 16,10"/>
+                            <line x1="12" y1="6" x2="12" y2="14"/>
+                        </svg>
+                        <p class="upload-text">Drag & drop or click to upload</p>
+                        <p class="upload-hint"></p>
+                        <button class="remove-multi-btn" onclick="removeMulti('reference')">×</button>
+                    </div>
+                    <div class="preview-area" id="referencePreview" style="display: none;">
+                        <button class="remove-btn" onclick="removeImage('reference')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <div class="preview-wrapper">
+                            <img id="referenceImg" alt="Generated Image">
+                        </div>
+                        <p class="filename" id="referenceFilename" data-label="Generated:"><span class="filename-label">Generated:</span></p>
+                    </div>
+                    <div class="preview-area multi-preview" id="referenceMultiPreview" style="display: none;">
+                        <button class="remove-btn" onclick="removeMulti('reference')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <div class="preview-wrapper">
+                            <div class="multi-stack" id="referenceThumbnails"></div>
+                        </div>
+                        <p class="filename" id="referenceMultiFilename"><span class="filename-label">Generated:</span></p>
+                    </div>
+                </div>
+
+                <div class="image-panel" id="generatedPanel">
+                    <div class="upload-area" id="generatedUpload">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5.5 13 A 6.5 6.5 0 0 0 18.5 13"/>
+                            <polyline points="8,10 12,6 16,10"/>
+                            <line x1="12" y1="6" x2="12" y2="14"/>
+                        </svg>
+                        <p class="upload-text">Drag & drop or click to upload</p>
+                        <p class="upload-hint"></p>
+                        <button class="remove-multi-btn" onclick="removeMulti('generated')">×</button>
+                    </div>
+                    <div class="preview-area" id="generatedPreview" style="display: none;">
+                        <button class="remove-btn" onclick="removeImage('generated')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <div class="preview-wrapper">
+                            <img id="generatedImg" alt="Target Image">
+                        </div>
+                        <p class="filename" id="generatedFilename" data-label="Target:"><span class="filename-label">Target:</span></p>
+                    </div>
+                    <div class="preview-area multi-preview" id="generatedMultiPreview" style="display: none;">
+                        <button class="remove-btn" onclick="removeMulti('generated')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <div class="preview-wrapper">
+                            <div class="multi-stack" id="generatedThumbnails"></div>
+                        </div>
+                        <p class="filename" id="generatedMultiFilename"><span class="filename-label">Target:</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="evaluation-section">
+                <div class="eval-header">
+                    <h2 class="eval-title">Quality Assessment</h2>
+                    <div class="eval-actions">
+                        <button class="eval-btn" id="evalBtn" disabled>
+                            <svg class="eval-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9,6 15,12 9,18"/>
+                            </svg>
+                            <svg class="loading-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" stroke-dasharray="50 100"/>
+                            </svg>
+                            <span>Start Assessment</span>
+                            <span class="loading-text">Processing...</span>
+                        </button>
+                        <button class="save-btn" id="saveBtn" disabled>
+                            <svg class="save-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="4" x2="12" y2="14"/>
+                                <polyline points="8,10 12,14 16,10"/>
+                                <path d="M3 13 A 9 9 0 0 0 21 13"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="eval-metrics">
+                    <div class="metric-item" id="msssim">
+                        <div class="metric-label">
+                            <span class="label-normal">
+                                <span class="metric-name">MS-SSIM</span>
+                                <span class="metric-arrow up">↑</span>
+                            </span>
+                            <span class="label-range">
+                                <span class="metric-name">MS-SSIM</span>
+                                <span class="metric-range">[0, 1]</span>
+                            </span>
+                        </div>
+                        <div class="metric-value" id="msssimValue">-</div>
+                    </div>
+                    <div class="metric-item" id="psnr">
+                        <div class="metric-label">
+                            <span class="label-normal">
+                                <span class="metric-name">PSNR</span>
+                                <span class="metric-arrow up">↑</span>
+                            </span>
+                            <span class="label-range">
+                                <span class="metric-name">PSNR</span>
+                                <span class="metric-range">[0, ∞) dB</span>
+                            </span>
+                        </div>
+                        <div class="metric-value" id="psnrValue">-</div>
+                    </div>
+                    <div class="metric-item" id="lpips">
+                        <div class="metric-label">
+                            <span class="label-normal">
+                                <span class="metric-name">LPIPS</span>
+                                <span class="metric-arrow down">↓</span>
+                            </span>
+                            <span class="label-range">
+                                <span class="metric-name">LPIPS</span>
+                                <span class="metric-range">[0, 1]</span>
+                            </span>
+                        </div>
+                        <div class="metric-value" id="lpipsValue">-</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let referenceImage = null;
+        let generatedImage = null;
+        let referenceImageName = '';
+        let generatedImageName = '';
+
+        function setupDropZone(panelId, uploadId, type) {
+            const panel = document.getElementById(panelId);
+            const uploadArea = document.getElementById(uploadId);
+
+            console.log('Setting up drop zone for:', type);
+
+            // Create file input dynamically
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+            input.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;';
+            uploadArea.appendChild(input);
+            console.log('Input created for:', type);
+
+            // Prevent default drag behaviors on panel
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                panel.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Highlight drop zone on drag
+            panel.addEventListener('dragenter', () => panel.classList.add('drag-over'));
+            panel.addEventListener('dragover', () => panel.classList.add('drag-over'));
+            panel.addEventListener('dragleave', (e) => {
+                if (!panel.contains(e.relatedTarget)) {
+                    panel.classList.remove('drag-over');
+                }
+            });
+            panel.addEventListener('drop', () => panel.classList.remove('drag-over'));
+
+            // Handle drop on panel - with folder support via File System Access API
+            panel.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                panel.classList.remove('drag-over');
+
+                const dt = e.dataTransfer;
+                const items = dt.items;
+
+                console.log('Drop event:', type, 'files:', dt.files.length, 'items:', items.length);
+
+                // Collect all files including from folders
+                const allFiles = [];
+
+                if (items) {
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        if (item.kind === 'file') {
+                            const entry = item.webkitGetAsEntry();
+                            if (entry) {
+                                if (entry.isFile) {
+                                    const file = item.getAsFile();
+                                    if (file) allFiles.push(file);
+                                } else if (entry.isDirectory) {
+                                    // It's a directory - read all files from it
+                                    const dirFiles = await readEntriesRecursive(entry);
+                                    allFiles.push(...dirFiles);
+                                }
+                            } else {
+                                // Fallback to getAsFile
+                                const file = item.getAsFile();
+                                if (file) allFiles.push(file);
+                            }
+                        }
+                    }
+                }
+
+                // Fallback: if no files collected from items, try dt.files
+                if (allFiles.length === 0 && dt.files.length > 0) {
+                    for (let i = 0; i < dt.files.length; i++) {
+                        allFiles.push(dt.files[i]);
+                    }
+                }
+
+                console.log('Total files collected:', allFiles.length);
+                if (allFiles.length > 0) {
+                    handleFiles(allFiles, type);
+                }
+            }, false);
+
+            // Click to upload
+            panel.addEventListener('click', (e) => {
+                console.log('Panel clicked for:', type, 'target:', e.target.tagName);
+                if (e.target.closest('.remove-btn') || e.target.closest('button')) {
+                    console.log('Ignoring click on button');
+                    return;
+                }
+                console.log('Triggering file input click for:', type);
+                input.click();
+            }, false);
+
+            // Handle file input change
+            input.addEventListener('change', (e) => {
+                console.log('Input change for:', type, 'files:', e.target.files.length);
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files, type);
+                    e.target.value = '';
+                }
+            }, false);
+        }
+
+        function showPreview(type, dataUrl, filename) {
+            const uploadId = type + 'Upload';
+            const previewId = type + 'Preview';
+            const imgId = type + 'Img';
+            const filenameId = type + 'Filename';
+            const label = type === 'reference' ? 'Generated: ' : 'Target: ';
+
+            document.getElementById(uploadId).style.display = 'none';
+            document.getElementById(previewId).style.display = 'flex';
+            document.getElementById(type + 'MultiPreview').style.display = 'none';
+
+            const img = document.getElementById(imgId);
+            img.onload = function() {
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                document.querySelector('#' + previewId + ' .preview-wrapper').style.aspectRatio = aspectRatio;
+            };
+            img.src = dataUrl;
+            document.getElementById(filenameId).innerHTML = '<span class="filename-label">' + label + '</span>' + filename;
+        }
+
+        function removeImage(type) {
+            event.stopPropagation();
+            const uploadId = type + 'Upload';
+            const previewId = type + 'Preview';
+
+            const uploadArea = document.getElementById(uploadId);
+            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop or click to upload';
+            uploadArea.querySelector('.upload-hint').textContent = '';
+            uploadArea.classList.remove('has-files');
+            uploadArea.style.display = 'flex';
+            
+            const previewArea = document.getElementById(previewId);
+            previewArea.classList.add('hidden');
+            previewArea.style.display = 'none';
+            
+            const multiPreview = document.getElementById(type + 'MultiPreview');
+            multiPreview.classList.add('hidden');
+            multiPreview.style.display = 'none';
+
+            // Clear all state
+            if (type === 'reference') {
+                referenceImage = null;
+                referenceFiles = [];
+                refHasBatch = false;
+                referenceImageName = '';
+            } else {
+                generatedImage = null;
+                generatedFiles = [];
+                disHasBatch = false;
+                generatedImageName = '';
+            }
+            updateEvalButton();
+        }
+
+        function removeMulti(type) {
+            event.stopPropagation();
+            const uploadId = type + 'Upload';
+            const uploadArea = document.getElementById(uploadId);
+            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop or click to upload';
+            uploadArea.querySelector('.upload-hint').textContent = '';
+            uploadArea.classList.remove('has-files');
+            uploadArea.style.display = 'flex';
+            
+            const preview = document.getElementById(type + 'Preview');
+            preview.classList.add('hidden');
+            preview.style.display = 'none';
+            
+            const multiPreview = document.getElementById(type + 'MultiPreview');
+            multiPreview.classList.add('hidden');
+            multiPreview.style.display = 'none';
+            
+            document.getElementById(type + 'Thumbnails').innerHTML = '';
+
+            if (type === 'reference') {
+                referenceFiles = [];
+                refHasBatch = false;
+                referenceImageName = '';
+            } else {
+                generatedFiles = [];
+                disHasBatch = false;
+                generatedImageName = '';
+            }
+            updateEvalButton();
+        }
+
+        function updateEvalButton() {
+            const btn = document.getElementById('evalBtn');
+            const refHasSingle = !!referenceImage;
+            const refHasMulti = referenceFiles.length > 0;
+            const disHasSingle = !!generatedImage;
+            const disHasMulti = generatedFiles.length > 0;
+
+            // Both must have same mode (single vs multi)
+            const refMode = refHasSingle ? 'single' : refHasBatch ? 'multi' : 'empty';
+            const disMode = disHasSingle ? 'single' : disHasBatch ? 'multi' : 'empty';
+
+            const canEval = refMode !== 'empty' && disMode !== 'empty' && refMode === disMode;
+            btn.disabled = !canEval;
+        }
+
+        function setEvalButtonLoading(isLoading) {
+            const btn = document.getElementById('evalBtn');
+            if (isLoading) {
+                btn.classList.add('loading');
+                btn.querySelector('span').textContent = 'Processing...';
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.querySelector('span').textContent = 'Start Assessment';
+                updateEvalButton();
+            }
+        }
+
+        async function compareImages() {
+            setEvalButtonLoading(true);
+
+            // Clear previous evaluation results
+            document.getElementById('msssimValue').textContent = '-';
+            document.getElementById('psnrValue').textContent = '-';
+            document.getElementById('lpipsValue').textContent = '-';
+            const existingList = document.querySelector('.multi-results-list');
+            if (existingList) existingList.remove();
+
+            // Multi mode
+            if (referenceFiles.length > 0 && generatedFiles.length > 0) {
+                await compareMultiImages();
+                setEvalButtonLoading(false);
+                return;
+            }
+
+            // Single image mode
+            if (!referenceImage || !generatedImage) {
+                setEvalButtonLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/compare-base64', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        generate: referenceImage,
+                        reference: generatedImage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Calculation error: ' + data.error);
+                    return;
+                }
+
+                document.getElementById('msssimValue').textContent = data.metrics.msssim;
+                document.getElementById('psnrValue').textContent = data.metrics.psnr >= 100 ? '∞' : data.metrics.psnr.toFixed(2) + ' dB';
+                document.getElementById('lpipsValue').textContent = data.metrics.lpips;
+
+                // Enable save button
+                document.getElementById('saveBtn').disabled = false;
+
+                // Save current results for export
+                currentResults = [{
+                    name: 'Single Image Comparison',
+                    metrics: data.metrics
+                }];
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Request failed: ' + error.message);
+            } finally {
+                setEvalButtonLoading(false);
+            }
+        }
+
+        async function compareMultiImages() {
+            // Sort files on both sides in the same order
+            const sortedRef = [...referenceFiles].sort(naturalSort);
+            const sortedDist = [...generatedFiles].sort(naturalSort);
+
+            const count = Math.min(sortedRef.length, sortedDist.length);
+            if (count === 0) return;
+
+            if (sortedRef.length !== sortedDist.length) {
+                const proceed = confirm(`Image count mismatch!\nGenerated: ${sortedRef.length} images\nTarget: ${sortedDist.length} images\n\nProceed with the smaller count?`);
+                if (!proceed) return;
+            }
+
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                const refB64 = await fileToBase64(sortedRef[i]);
+                const distB64 = await fileToBase64(sortedDist[i]);
+
+                try {
+                    const response = await fetch('/api/compare-base64', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ generate: refB64, reference: distB64 })
+                    });
+                    const data = await response.json();
+                    if (!data.error) {
+                        results.push({
+                            name: `${sortedRef[i].name} vs ${sortedDist[i].name}`,
+                            metrics: data.metrics
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error comparing', i, e);
+                }
+            }
+
+            displayMultiResults(results);
+
+            // Enable save button
+            document.getElementById('saveBtn').disabled = false;
+
+            // Save current results for export
+            currentResults = [...results];
+        }
+
+        document.getElementById('evalBtn').addEventListener('click', compareImages);
+        document.getElementById('saveBtn').addEventListener('click', saveReport);
+
+        // Current evaluation results
+        let currentResults = [];
+
+        // Save evaluation report as image
+        async function saveReport() {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-dasharray="50 100"/></svg>';
+
+            try {
+                const timestamp = new Date().toLocaleString('en-US');
+
+                // Build image grid (stacked effect consistent with upload preview)
+                const refFiles = referenceFiles.length > 0 ? [...referenceFiles] : (referenceImage ? [referenceImage] : []);
+                const distFiles = generatedFiles.length > 0 ? [...generatedFiles] : (generatedImage ? [generatedImage] : []);
+
+                // Calculate averages
+                const avgMsssim = currentResults.reduce((a, r) => a + r.metrics.msssim, 0) / currentResults.length;
+                const avgPsnr = currentResults.reduce((a, r) => a + r.metrics.psnr, 0) / currentResults.length;
+                const avgLpips = currentResults.reduce((a, r) => a + r.metrics.lpips, 0) / currentResults.length;
+
+                const isMultiMode = currentResults.length > 1;
+                const dateStr = new Date().toISOString().slice(0, 10);
+
+                // Function to generate single report
+                async function generateReport(includeDetails) {
+                    const reportDiv = document.createElement('div');
+                    reportDiv.className = 'report-container';
+                    document.body.appendChild(reportDiv);
+
+                    reportDiv.innerHTML = `
+                        <div class="report-title">Image Quality Assessment Report</div>
+                        <div class="report-time">Assessment Time: ${timestamp}</div>
+                        <div class="report-images">
+                            <div class="report-image-box">
+                                <div class="report-image-grid" id="reportRefGrid"></div>
+                                <div class="report-image-label">${refFiles.length > 1 ? 'Generated: ' + refFiles.length + ' images loaded' : referenceImageName}</div>
+                            </div>
+                            <div class="report-image-box">
+                                <div class="report-image-grid" id="reportDistGrid"></div>
+                                <div class="report-image-label">${distFiles.length > 1 ? 'Target: ' + distFiles.length + ' images loaded' : generatedImageName}</div>
+                            </div>
+                        </div>
+                        <div class="report-metrics">
+                            <div class="report-metric">
+                                <div class="report-metric-label">MS-SSIM <span class="metric-arrow up">↑</span></div>
+                                <div class="report-metric-value">${avgMsssim.toFixed(4)}</div>
+                            </div>
+                            <div class="report-metric">
+                                <div class="report-metric-label">PSNR <span class="metric-arrow up">↑</span></div>
+                                <div class="report-metric-value">${avgPsnr >= 100 ? '∞' : avgPsnr.toFixed(2)}</div>
+                            </div>
+                            <div class="report-metric">
+                                <div class="report-metric-label">LPIPS <span class="metric-arrow down">↓</span></div>
+                                <div class="report-metric-value">${avgLpips.toFixed(4)}</div>
+                            </div>
+                        </div>
+                        ${includeDetails && isMultiMode ? `
+                        <div class="report-results">
+                            <div class="report-results-title">Detailed Comparison Results (${currentResults.length} pairs)</div>
+                            ${currentResults.map((r, i) => `
+                                <div class="report-result-item">
+                                    <span style="color:#999;margin-right:10px;">${i + 1}.</span>
+                                    <span class="report-result-name">${r.name}</span>
+                                    <div class="report-result-metrics">
+                                        <span>MS-SSIM: ${r.metrics.msssim.toFixed(4)}</span>
+                                        <span>PSNR: ${r.metrics.psnr >= 100 ? '∞' : r.metrics.psnr.toFixed(2)}</span>
+                                        <span>LPIPS: ${r.metrics.lpips.toFixed(4)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    `;
+
+                    const refGrid = reportDiv.querySelector('#reportRefGrid');
+                    const distGrid = reportDiv.querySelector('#reportDistGrid');
+
+                    async function buildReportGrid(container, files) {
+                        if (!files || files.length === 0) return;
+                        const firstSrc = typeof files[0] === 'string' ? files[0] : await fileToBase64(files[0]);
+                        return new Promise((resolve) => {
+                            const img = document.createElement('img');
+                            img.onload = () => {
+                                container.appendChild(img);
+                                if (files.length > 1) {
+                                    const overflow = document.createElement('div');
+                                    overflow.className = 'report-image-overflow';
+                                    overflow.textContent = '+' + (files.length - 1);
+                                    container.appendChild(overflow);
+                                }
+                                resolve();
+                            };
+                            img.onerror = () => resolve();
+                            img.src = firstSrc;
+                        });
+                    }
+
+                    await buildReportGrid(refGrid, refFiles);
+                    await buildReportGrid(distGrid, distFiles);
+
+                    // Generate image using html2canvas
+                    const canvas = await html2canvas(reportDiv, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true
+                    });
+
+                    // Clean up temporary container
+                    document.body.removeChild(reportDiv);
+
+                    return canvas.toDataURL('image/png');
+                }
+
+                // Multi-image mode: save three reports
+                if (isMultiMode) {
+                    // Summary version (no detailed results)
+                    const canvas1 = await generateReport(false);
+                    const link1 = document.createElement('a');
+                    link1.download = `Quality_Report_Summary_${dateStr}.png`;
+                    link1.href = canvas1;
+                    link1.click();
+
+                    // Detailed version (with detailed results)
+                    const canvas2 = await generateReport(true);
+                    const link2 = document.createElement('a');
+                    link2.download = `Quality_Report_Detailed_${dateStr}.png`;
+                    link2.href = canvas2;
+                    link2.click();
+
+                    // Data table (CSV)
+                    const csvContent = generateCSV();
+                    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const csvUrl = URL.createObjectURL(blob);
+                    const link3 = document.createElement('a');
+                    link3.download = `Quality_Report_Data_${dateStr}.csv`;
+                    link3.href = csvUrl;
+                    link3.click();
+                    URL.revokeObjectURL(csvUrl);
+                } else {
+                    // Single image mode: save one report
+                    const canvas = await generateReport(false);
+                    const link = document.createElement('a');
+                    link.download = `Quality_Report_${dateStr}.png`;
+                    link.href = canvas;
+                    link.click();
+                }
+
+            } catch (error) {
+                console.error('Save failed:', error);
+                alert('Save failed: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `
+                    <svg class="save-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="4" x2="12" y2="14"/>
+                        <polyline points="8,10 12,14 16,10"/>
+                        <path d="M4 14 A 8 8 0 0 0 20 14"/>
+                    </svg>
+                `;
+            }
+        }
+
+        // Generate CSV data table
+        function generateCSV() {
+            const headers = ['Index', 'Generated File', 'Target File', 'MS-SSIM', 'PSNR', 'LPIPS'];
+            const rows = currentResults.map((r, i) => {
+                const [refName, distName] = r.name.split(' vs ');
+                return [
+                    i + 1,
+                    refName || '',
+                    distName || '',
+                    r.metrics.msssim.toFixed(6),
+                    r.metrics.psnr >= 100 ? '∞' : r.metrics.psnr.toFixed(2),
+                    r.metrics.lpips.toFixed(6)
+                ];
+            });
+
+            // Calculate averages
+            const msssimValues = currentResults.map(r => r.metrics.msssim);
+            const psnrValues = currentResults.map(r => r.metrics.psnr);
+            const lpipsValues = currentResults.map(r => r.metrics.lpips);
+
+            const avgMsssim = msssimValues.reduce((a, v) => a + v, 0) / msssimValues.length;
+            const avgPsnr = psnrValues.reduce((a, v) => a + v, 0) / psnrValues.length;
+            const avgLpips = lpipsValues.reduce((a, v) => a + v, 0) / lpipsValues.length;
+
+            // Calculate standard deviation
+            const stdMsssim = Math.sqrt(msssimValues.reduce((a, v) => a + Math.pow(v - avgMsssim, 2), 0) / msssimValues.length);
+            const stdPsnr = Math.sqrt(psnrValues.reduce((a, v) => a + Math.pow(v - avgPsnr, 2), 0) / psnrValues.length);
+            const stdLpips = Math.sqrt(lpipsValues.reduce((a, v) => a + Math.pow(v - avgLpips, 2), 0) / lpipsValues.length);
+
+            const avgRow = ['Average', '', '', avgMsssim.toFixed(6), avgPsnr >= 100 ? '∞' : avgPsnr.toFixed(2), avgLpips.toFixed(6)];
+            const stdRow = ['Std Dev', '', '', stdMsssim.toFixed(6), stdPsnr >= 100 ? '∞' : stdPsnr.toFixed(2), stdLpips.toFixed(6)];
+
+            // Build CSV content
+            const csvRows = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+                avgRow.map(cell => `"${cell}"`).join(','),
+                stdRow.map(cell => `"${cell}"`).join(',')
+            ];
+
+            return csvRows.join('\n');
+        }
+
+        setupDropZone('referencePanel', 'referenceUpload', 'reference');
+        setupDropZone('generatedPanel', 'generatedUpload', 'generated');
+
+        // Smart file handler - single image vs folder
+        function handleFiles(files, type, isFolder = false) {
+            const allFiles = Array.from(files);
+            console.log('handleFiles called:', { type, fileCount: allFiles.length, isFolder });
+            console.log('  First file:', allFiles[0]?.name, 'isImage:', isImageFile(allFiles[0]?.name));
+
+            // Single image (not a folder)
+            if (allFiles.length === 1 && isImageFile(allFiles[0].name) && !isFolder) {
+                console.log('  -> Calling handleSingleImage');
+                handleSingleImage(allFiles[0], type);
+            }
+            // Folder or multiple files - go to multi mode
+            else {
+                console.log('  -> Calling handleMultiImages');
+                handleMultiImages(allFiles, type);
+            }
+        }
+
+        function handleSingleImage(file, type) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (type === 'reference') {
+                    referenceImage = e.target.result;
+                    referenceFiles = [];
+                    refHasBatch = false;
+                    referenceImageName = file.name;
+                } else {
+                    generatedImage = e.target.result;
+                    generatedFiles = [];
+                    disHasBatch = false;
+                    generatedImageName = file.name;
+                }
+                // Hide multi preview, show single preview
+                document.getElementById(type + 'MultiPreview').style.display = 'none';
+                document.getElementById(type + 'Thumbnails').innerHTML = '';
+                showPreview(type, e.target.result, file.name);
+                updateEvalButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        let referenceFiles = [];
+        let generatedFiles = [];
+        let refHasBatch = false;
+        let disHasBatch = false;
+
+        // Windows-style natural sort
+        function naturalSort(a, b) {
+            const nameA = (a.webkitRelativePath || a.name).replace(/\\/g, '/');
+            const nameB = (b.webkitRelativePath || b.name).replace(/\\/g, '/');
+            // Windows style: compare character by character, numbers as whole units
+            return nameA.localeCompare(nameB, 'en-US', { sensitivity: 'base', numeric: true });
+        }
+
+        async function handleMultiImages(files, type) {
+            console.log('handleMultiImages called:', { type, totalFiles: files.length });
+            const imageFiles = files.filter(f => isImageFile(f.name)).sort(naturalSort);
+            console.log('imageFiles filtered:', imageFiles.length);
+            
+            if (imageFiles.length === 0) {
+                alert('No image files found');
+                return;
+            }
+
+            if (type === 'reference') {
+                referenceImage = null;
+                referenceFiles = imageFiles;
+                refHasBatch = true;
+            } else {
+                generatedImage = null;
+                generatedFiles = imageFiles;
+                disHasBatch = true;
+            }
+
+            // Update UI - hide upload area, show multi preview
+            document.getElementById(type + 'Upload').style.display = 'none';
+            const singlePreview = document.getElementById(type + 'Preview');
+            const multiPreview = document.getElementById(type + 'MultiPreview');
+            
+            // Hide single preview (need to override style.display too)
+            singlePreview.classList.add('hidden');
+            singlePreview.style.display = 'none';
+            
+            // Show multi preview
+            multiPreview.style.display = 'flex';
+            multiPreview.classList.remove('hidden');
+            
+            const thumbnails = document.getElementById(type + 'Thumbnails');
+            const multiFilename = document.getElementById(type + 'MultiFilename');
+            
+            const label = type === 'reference' ? 'Generated: ' : 'Target: ';
+            const remaining = imageFiles.length - 1;
+            multiFilename.innerHTML = `<span class="filename-label">${label}</span>${imageFiles.length} images loaded`;
+            
+            thumbnails.innerHTML = '';
+            
+            // Get first image aspect ratio
+            const firstReader = new FileReader();
+            firstReader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const aspectRatio = img.width / img.height;
+                    thumbnails.style.aspectRatio = aspectRatio;
+                    createStack(aspectRatio);
+                };
+                img.src = e.target.result;
+            };
+            firstReader.readAsDataURL(imageFiles[0]);
+            
+            function createStack(aspectRatio) {
+                // Only show first image
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    thumbnails.appendChild(img);
+                };
+                reader.readAsDataURL(imageFiles[0]);
+                
+                // If there are remaining images, show "+N" placeholder
+                if (remaining > 0) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'thumb-placeholder';
+                    placeholder.textContent = '+' + remaining;
+                    thumbnails.appendChild(placeholder);
+                }
+            }
+            multiPreview.style.display = '';
+            multiPreview.classList.remove('hidden');
+
+            // Enable button if both sides have files
+            console.log('Calling updateEvalButton, referenceFiles:', referenceFiles.length, 'generatedFiles:', generatedFiles.length);
+            updateEvalButton();
+        }
+
+        function isImageFile(filename) {
+            const ext = filename.toLowerCase().split('.').pop();
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function displayMultiResults(results) {
+            if (results.length === 0) {
+                return;
+            }
+
+            const avgMsssim = results.reduce((a, r) => a + r.metrics.msssim, 0) / results.length;
+            const avgPsnr = results.reduce((a, r) => a + r.metrics.psnr, 0) / results.length;
+            const avgLpips = results.reduce((a, r) => a + r.metrics.lpips, 0) / results.length;
+
+            // Display at single image metric position
+            document.getElementById('msssimValue').textContent = avgMsssim.toFixed(4);
+            document.getElementById('psnrValue').textContent = avgPsnr >= 100 ? '∞' : avgPsnr.toFixed(2) + ' dB';
+            document.getElementById('lpipsValue').textContent = avgLpips.toFixed(4);
+
+            // Display each comparison result
+            let resultsHtml = '<div class="multi-results-list">';
+            results.forEach((r, index) => {
+                resultsHtml += `
+                    <div class="multi-result-item">
+                        <span class="multi-result-index">${index + 1}</span>
+                        <span class="multi-result-name">${r.name}</span>
+                        <span class="multi-result-metric">MS-SSIM: ${r.metrics.msssim.toFixed(4)}</span>
+                        <span class="multi-result-metric">PSNR: ${r.metrics.psnr >= 100 ? '∞' : r.metrics.psnr.toFixed(2)}</span>
+                        <span class="multi-result-metric">LPIPS: ${r.metrics.lpips.toFixed(4)}</span>
+                    </div>
+                `;
+            });
+            resultsHtml += '</div>';
+
+            // Add below metrics section
+            const evalMetrics = document.querySelector('.eval-metrics');
+            const existingList = evalMetrics.querySelector('.multi-results-list');
+            if (existingList) existingList.remove();
+            evalMetrics.insertAdjacentHTML('afterend', resultsHtml);
+        }
+
+        // Helper functions
+        function readEntriesRecursive(entry) {
+            return new Promise((resolve) => {
+                if (entry.isFile) {
+                    entry.file((file) => {
+                        resolve([file]);
+                    }, () => resolve([]));
+                } else if (entry.isDirectory) {
+                    const reader = entry.createReader();
+                    const allFiles = [];
+
+                    function readEntriesCallback(entries) {
+                        if (entries.length === 0) {
+                            resolve(allFiles);
+                        } else {
+                            const promises = [];
+                            for (let i = 0; i < entries.length; i++) {
+                                const e = entries[i];
+                                if (e.isFile) {
+                                    const p = new Promise((res) => {
+                                        e.file((file) => {
+                                            allFiles.push(file);
+                                            res();
+                                        }, () => res());
+                                    });
+                                    promises.push(p);
+                                } else if (e.isDirectory) {
+                                    const p = readEntriesRecursive(e).then((files) => {
+                                        allFiles.push(...files);
+                                    });
+                                    promises.push(p);
+                                }
+                            }
+                            Promise.all(promises).then(() => {
+                                reader.readEntries(readEntriesCallback);
+                            });
+                        }
+                    }
+
+                    reader.readEntries(readEntriesCallback);
+                } else {
+                    resolve([]);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
