@@ -1,8 +1,8 @@
 # Siming
 
 <p>
-  <img src="https://img.shields.io/badge/Status-In_Development-yellow?logo=github" alt="status">
-  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?logo=github" alt="prs-welcome">
+  <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="prs-welcome">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="license">
 </p>
 
