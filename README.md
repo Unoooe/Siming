@@ -1,8 +1,4 @@
-# DiffuScore
-
-[![license](https://img.shields.io/github/license/YOUR_USERNAME/DiffuScore?style=flat-square&logo=opensourceinitiative&logoColor=white)](https://github.com/YOUR_USERNAME/DiffuScore/blob/main/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)](https://github.com/YOUR_USERNAME/DiffuScore/pulls)
+# Siming
 
 ![Cover](assets/cover.png)
 
