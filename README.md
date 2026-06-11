@@ -1,4 +1,4 @@
-# DiffuScore
+# Siming
 
 ![Cover](assets/cover.png)
 
