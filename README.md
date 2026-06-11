@@ -59,7 +59,7 @@ PSNR = 20 × log10(255 / √MSE)
 Returns 100.0 when images are identical (MSE = 0).
 
 ### LPIPS
-Uses the `lpips` library with a VGG backbone. Input images are normalized to [−1, 1] before inference. Lower values indicate greater perceptual similarity.
+使用 `lpips` 库的 AlexNet 骨干网络。输入图像归一化到 [−1, 1] 后推理。值越低表示感知相似度越高。
 
 ## API
 

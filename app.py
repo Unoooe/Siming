@@ -20,13 +20,13 @@ def add_no_cache(response):
     response.headers['Expires'] = '0'
     return response
 
-loss_fn_vgg = None
+loss_fn_alex = None
 
 def init_lpips():
-    global loss_fn_vgg
-    if loss_fn_vgg is None:
-        loss_fn_vgg = lpips.LPIPS(net='vgg')
-    return loss_fn_vgg
+    global loss_fn_alex
+    if loss_fn_alex is None:
+        loss_fn_alex = lpips.LPIPS(net='alex')
+    return loss_fn_alex
 
 def pil_to_tensor(img):
     if img.mode != 'RGB':
@@ -87,7 +87,7 @@ def calculate_lpips(img1_pil, img2_pil):
     img2_tensor = pil_to_tensor(img2_pil) * 2 - 1
 
     with torch.no_grad():
-        distance = loss_fn_vgg(img1_tensor, img2_tensor)
+        distance = loss_fn_alex(img1_tensor, img2_tensor)
 
     return distance.item()
 
@@ -141,6 +141,7 @@ def compare_images_base64():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("Initializing LPIPS model (VGG)...")
+    init_lpips()
+    print("Initializing LPIPS model...")
     print("Starting server at http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
