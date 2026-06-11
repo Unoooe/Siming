@@ -17,30 +17,74 @@ Once, Siming inscribed the fate of men; today, Siming judges the merit of genera
 - Image preview
 
 ### Quality Metrics Calculation
-- **MS-SSIM** (Multi-Scale Structural Similarity) - Higher is better
-- **PSNR** (Peak Signal-to-Noise Ratio) - Higher is better
-- **LPIPS** (Learned Perceptual Image Patch Similarity) - Lower is better
+- **MS-SSIM** (Multi-Scale Structural Similarity) — Higher is better
+- **PSNR** (Peak Signal-to-Noise Ratio) — Higher is better
+- **LPIPS** (Learned Perceptual Image Patch Similarity) — Lower is better
 
 ### Comparison Modes
-- **Single Image Comparison** - Upload a pair of images for assessment
-- **Multi-Image Comparison** - Batch upload multiple images, system auto-sorts by name and pairs them for comparison
+- **Single Image Comparison** — Upload a pair of images for assessment
+- **Multi-Image Comparison** — Batch upload multiple images, system auto-sorts by name and pairs them for comparison
 
 ### Report Export
-- **Summary Report** - Image preview + average metrics
-- **Detailed Report** - Contains detailed data for all comparison pairs
-- **Data Table** - CSV format with averages and standard deviations
+- **Summary Report** — Image preview + average metrics
+- **Data Table** — CSV format with averages and standard deviations
 
 ## Tech Stack
 
 - **Backend**: Python Flask
 - **Frontend**: HTML5 + JavaScript
-- **Image Quality Metrics**:
-  - **MS-SSIM**: `pytorch-msssim` (Multi-Scale Structural Similarity)
-  - **PSNR**: `OpenCV` + `numpy` (Peak Signal-to-Noise Ratio)
-  - **LPIPS**: `lpips` (Learned Perceptual Image Patch Similarity)
-- **Chart Generation**: html2canvas
-- **Image Processing**: OpenCV, Pillow
-- **Deep Learning**: PyTorch, torchvision
+- **Image Processing**: OpenCV, Pillow, NumPy, SciPy
+- **Deep Learning**: PyTorch
+- **Report Generation**: html2canvas
+
+## Metrics Implementation
+
+### MS-SSIM
+Custom 5-scale implementation using a Gaussian pyramid. Each scale computes SSIM using an 11×11 Gaussian window (σ=1.5) via `cv2.filter2D`, then downsamples with `scipy.ndimage.gaussian_filter` (σ=1.5). Final score is the weighted product across scales:
+
+```
+weights = [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
+MS-SSIM = ∏ SSIM_i ^ weight_i
+```
+
+Constants: C1 = (0.01×255)², C2 = (0.03×255)²
+
+### PSNR
+MSE-based computation on RGB pixel values in [0, 255]:
+
+```
+PSNR = 20 × log10(255 / √MSE)
+```
+
+Returns 100.0 when images are identical (MSE = 0).
+
+### LPIPS
+Uses the `lpips` library with a VGG backbone. Input images are normalized to [−1, 1] before inference. Lower values indicate greater perceptual similarity.
+
+## API
+
+### `POST /api/compare-base64`
+
+Request body (JSON):
+
+| Field | Description |
+|---|---|
+| `generate` | Base64-encoded Gen image (left panel) |
+| `reference` | Base64-encoded Ref image (right panel) |
+
+Response:
+
+```json
+{
+  "metrics": {
+    "msssim": 0.987654,
+    "psnr": 38.52,
+    "lpips": 0.012345
+  }
+}
+```
+
+If the two images differ in size, the reference image is resized to match the generated image using Lanczos resampling before metric computation.
 
 # Quick Start
 
@@ -62,10 +106,8 @@ Then open http://localhost:5000 in your browser
 
 ## Project Structure
 
-### Project Structure
-
-```text
-├── app.py              # Flask backend application
+```
+├── app.py              # Flask backend — metric computation and API
 ├── requirements.txt    # Python dependencies
 ├── start.bat           # Windows startup script
 ├── README.md           # Project documentation
@@ -78,22 +120,26 @@ Then open http://localhost:5000 in your browser
 
 ## Usage
 
-1. After starting the application, the page is divided into left and right areas
-2. **Left**: Upload generated images
-3. **Right**: Upload target images
-4. Click "Start Assessment" to perform quality comparison
-5. After assessment completes, click "Save Report" to export results
+1. After starting the application, the page is divided into left and right panels
+2. **Left (Gen)**: Upload generated images
+3. **Right (Ref)**: Upload reference / target images
+4. Click **Start** to compute quality metrics
+5. After assessment completes, click the download button to export results
 
 ### Batch Upload
-- Support for dragging folders
-- System auto-sorts by name and pairs images (index positions correspond one-to-one)
-- Multi-image mode exports: summary report, detailed report, CSV data table
+- Drag and drop a folder onto either panel
+- System auto-sorts files by name (natural sort) and pairs them by index
+- Exports a summary report image and a CSV data table
 
 ## Dependencies
 
-- Flask - Web framework
-- PyTorch - Deep learning framework
-- torchvision - Image processing
-- OpenCV - Computer vision
-- lpips - Perceptual similarity model
-- Pillow - Python imaging library
+| Package | Purpose |
+|---|---|
+| Flask | Web framework |
+| flask-cors | CORS headers |
+| Pillow | Image I/O |
+| NumPy | Numerical computation |
+| SciPy | Gaussian filter for MS-SSIM pyramid |
+| OpenCV | Gaussian window filtering for SSIM |
+| PyTorch | Tensor operations for LPIPS |
+| lpips | Perceptual similarity (VGG) |
